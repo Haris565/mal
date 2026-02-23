@@ -1,8 +1,14 @@
 import Router from "express";
-import { Request, Response } from "express";
+import {
+  getVerificationStatus,
+  updateVerificationStatus,
+} from "../controllers/verification.controller";
+import { authenticate } from "../middleware";
 
 const router = Router();
 
-router.post("/verification/status", (req: Request, res: Response) => {});
+router.get("/v1/verification/status", authenticate, getVerificationStatus);
+
+router.post("/v1/verification/update", authenticate, updateVerificationStatus);
 
 export default router;

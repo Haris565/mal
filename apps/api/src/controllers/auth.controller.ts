@@ -4,51 +4,49 @@ import { generateAccessToken } from "../helpers";
 import { generateRefreshToken } from "../helpers";
 import { Request, Response } from "express";
 import { users, sessions, passwords } from "../storage";
-import uuid from "uuid";
+import { v4 as uuidv4 } from "uuid";
 
-export const login = (req: Request, res: Response) => {
+export const login = async (req: Request, res: Response) => {
   try {
     const result = loginSchema.safeParse(req?.body);
 
     if (!result.success) {
-      return res.status(400).json({ error: result.error.message });
+      return res.status(400).json({ message: result.error.message });
     }
 
     const { email, password } = result.data;
 
-    const user = users.get(email);
+    const user = [...users.values()].find((u) => u.email === email);
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const storedPassword = passwords.get(user.id);
+    const storedPassword = passwords.get(user?.id);
 
     if (!storedPassword) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const isPasswordValid = comparePassword(password, storedPassword);
+    const isPasswordValid = await comparePassword(password, storedPassword);
 
     if (!isPasswordValid) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const session = sessions.get(user.id);
+    const accessToken = generateAccessToken(user.id);
+    const refreshToken = generateRefreshToken(user.id);
 
-    if (!session) {
-      return res.status(401).json({ error: "Invalid credentials" });
-    }
+    const sessionObj: Session = {
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      accessToken,
+      refreshToken,
+    };
 
-    const accessToken = generateAccessToken(session.userId);
-    const refreshToken = generateRefreshToken(session.userId);
+    sessions.set(user.id, sessionObj);
 
-    session.accessToken = accessToken;
-    session.refreshToken = refreshToken;
-
-    sessions.set(session.userId, session);
-
-    res.json({ user, session });
+    res.json({ user, session: sessionObj });
   } catch (error) {}
 };
 
@@ -57,19 +55,17 @@ export const register = async (req: Request, res: Response) => {
     const result = registerSchema.safeParse(req?.body);
 
     if (!result.success) {
-      return res.status(400).json({ error: result.error.message });
+      return res.status(400).json({ message: result.error.message });
     }
 
     const { name, email, password } = result.data;
 
-    const storedUsers = users.entries();
-
-    for (const [key, value] of storedUsers) {
+    for (const value of users.values()) {
       if (value.email === email) {
-        return res.status(409).json({ error: "User already exists" });
+        return res.status(409).json({ message: "User already exists" });
       }
     }
-    const id = uuid.v4();
+    const id = uuidv4();
 
     const userObj: User = {
       id,
@@ -81,7 +77,7 @@ export const register = async (req: Request, res: Response) => {
 
     const passwordHash = await hashPassword(password);
 
-    passwords.set(email, passwordHash);
+    passwords.set(id, passwordHash);
 
     const accessToken = generateAccessToken(id);
     const refreshToken = generateRefreshToken(id);
@@ -99,6 +95,14 @@ export const register = async (req: Request, res: Response) => {
   } catch (error) {}
 };
 
+export const logout = (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    sessions.delete(userId);
+    res.json({ message: "Logged out" });
+  } catch (error) {}
+};
+
 export const refresh = (req: Request, res: Response) => {
   try {
     const resfrshToke = req?.body.refreshToken;
@@ -107,11 +111,9 @@ export const refresh = (req: Request, res: Response) => {
       return res.status(400).json({ error: "Refresh token is required" });
     }
 
-    const storedSessions = sessions.entries();
-
     let session;
 
-    for (const [key, value] of storedSessions) {
+    for (const value of sessions.values()) {
       if (value.refreshToken === resfrshToke) {
         session = value;
         break;
@@ -119,13 +121,13 @@ export const refresh = (req: Request, res: Response) => {
     }
 
     if (!session) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const user = users.get(session.userId);
 
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid credentials" });
     }
 
     const accessToken = generateAccessToken(session.userId);

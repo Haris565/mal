@@ -17,9 +17,12 @@ type SessionStore = {
 };
 
 type OnboardingStore = {
-  onboarding: Onboarding | null;
-  setOnboarding: (onboarding: Onboarding) => void;
+  onboarding: Partial<Onboarding> | null;
+  setOnboarding: (onboarding: Partial<Onboarding>) => void;
+  updateOnboarding: (data: Partial<Onboarding>) => void;
   clearOnboarding: () => void;
+  step: number;
+  setStep: (step: number) => void;
 };
 
 type ThemeStore = {
@@ -61,7 +64,11 @@ export const useOnboardingStore = create<OnboardingStore>()(
     (set) => ({
       onboarding: null,
       setOnboarding: (onboarding) => set({ onboarding }),
+      updateOnboarding: (data) =>
+        set((state) => ({ onboarding: { ...state.onboarding, ...data } })),
       clearOnboarding: () => set({ onboarding: null }),
+      step: 1,
+      setStep: (step) => set({ step }),
     }),
     {
       name: "onboarding",

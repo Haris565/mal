@@ -1,10 +1,35 @@
-import { Switch } from "react-native";
+import { useState } from "react";
+import { Switch, TouchableOpacity, Alert } from "react-native";
 import { Text, View } from "@/components/Themed";
-import { useThemeStore } from "../../store";
+import { useThemeStore, useUserStore, useSessionStore } from "../../store";
+import { axiosInstance } from "@/axios";
 
 export default function SettingsScreen() {
   const { theme, colors, setTheme } = useThemeStore();
+  const { clearUser } = useUserStore();
+  const { clearSession } = useSessionStore();
   const isDark = theme === "dark";
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  async function handleLogout() {
+    setLoggingOut(true);
+    try {
+      await axiosInstance.post("/v1/auth/logout");
+    } catch {
+      // proceed regardless — clear local state
+    } finally {
+      clearUser();
+      clearSession();
+      setLoggingOut(false);
+    }
+  }
+
+  function confirmLogout() {
+    Alert.alert("Log out", "Are you sure you want to log out?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Log out", style: "destructive", onPress: handleLogout },
+    ]);
+  }
 
   return (
     <View style={{ flex: 1, padding: 24 }}>
@@ -23,6 +48,7 @@ export default function SettingsScreen() {
           borderWidth: 1,
           borderColor: colors.border,
           backgroundColor: colors.inputBg,
+          marginBottom: 12,
         }}
       >
         <View style={{ gap: 2, backgroundColor: "transparent" }}>
@@ -39,6 +65,23 @@ export default function SettingsScreen() {
           thumbColor={colors.background}
         />
       </View>
+
+      <TouchableOpacity
+        onPress={confirmLogout}
+        disabled={loggingOut}
+        style={{
+          paddingVertical: 14,
+          paddingHorizontal: 16,
+          borderRadius: 12,
+          borderWidth: 1,
+          borderColor: colors.error,
+          alignItems: "center",
+        }}
+      >
+        <Text style={{ fontSize: 15, fontWeight: "600", color: colors.error }}>
+          {loggingOut ? "Logging out…" : "Log out"}
+        </Text>
+      </TouchableOpacity>
     </View>
   );
 }

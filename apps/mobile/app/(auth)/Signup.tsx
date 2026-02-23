@@ -12,7 +12,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TextInput } from "@/components/TextInput";
 import { Button } from "@/components/Button";
-import { useThemeStore } from "@/store";
+import { useThemeStore, useUserStore, useSessionStore } from "@/store";
 import { axiosInstance } from "@/axios";
 import { registerSchema } from "@mal/validators";
 import type { z } from "zod";
@@ -23,6 +23,8 @@ export default function Signup() {
   const { colors } = useThemeStore();
   const router = useRouter();
   const [apiError, setApiError] = useState<string | null>(null);
+  const { setUser } = useUserStore();
+  const { setSession } = useSessionStore();
 
   const {
     control,
@@ -36,11 +38,14 @@ export default function Signup() {
   async function onSubmit(data: FormFields) {
     setApiError(null);
     try {
-      await axiosInstance.post("/register", data);
-      router.replace("/(auth)/Signin");
+      const response = await axiosInstance.post("/v1/auth/register", data);
+      setUser(response.data.user);
+      setSession(response.data.session);
+      router.replace("/(tabs)");
     } catch (err: any) {
       const message =
-        err?.response?.data?.message ?? "Something went wrong. Please try again.";
+        err?.response?.data?.message ??
+        "Something went wrong. Please try again.";
       setApiError(message);
     }
   }
@@ -51,12 +56,21 @@ export default function Signup() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          padding: 24,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ marginBottom: 32 }}>
           <Text
-            style={{ fontSize: 28, fontWeight: "700", color: colors.textPrimary, marginBottom: 6 }}
+            style={{
+              fontSize: 28,
+              fontWeight: "700",
+              color: colors.textPrimary,
+              marginBottom: 6,
+            }}
           >
             Create account
           </Text>
@@ -118,7 +132,9 @@ export default function Signup() {
           />
 
           {apiError && (
-            <Text style={{ color: colors.error, fontSize: 13, textAlign: "center" }}>
+            <Text
+              style={{ color: colors.error, fontSize: 13, textAlign: "center" }}
+            >
               {apiError}
             </Text>
           )}
@@ -144,7 +160,9 @@ export default function Signup() {
             Already have an account?
           </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/Signin")}>
-            <Text style={{ color: colors.link, fontSize: 14, fontWeight: "600" }}>
+            <Text
+              style={{ color: colors.link, fontSize: 14, fontWeight: "600" }}
+            >
               Sign in
             </Text>
           </TouchableOpacity>

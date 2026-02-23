@@ -4,7 +4,8 @@
       "Bash(bun run:*)",
       "Bash(bun add nativewind --cwd apps/mobile 2>&1 && bun add -d tailwindcss --cwd apps/mobile 2>&1)",
       "Bash(bun install:*)",
-      "Bash(bun add:*)"
+      "Bash(bun add:*)",
+      "Bash(ls:*)"
     ]
   }
 }

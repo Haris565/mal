@@ -1,6 +1,9 @@
 import Router from "express";
-import { Request, Response } from "express";
+import { me } from "../controllers/me.controller";
+import { authenticate } from "../middleware";
 
 const router = Router();
 
-router.get("/me", (req: Request, res: Response) => {});
+router.get("/v1/me", authenticate, me);
+
+export default router;

@@ -15,7 +15,7 @@ export const sessionSchema = z.object({
 
 export const profileSchema = z.object({
   fullName: z.string(),
-  dateOfBirth: z.date(),
+  dateOfBirth: z.string(),
   nationality: z.string(),
 });
 

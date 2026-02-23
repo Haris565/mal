@@ -38,12 +38,16 @@ export default function Signin() {
   async function onSubmit(data: FormFields) {
     setApiError(null);
     try {
-      const res = await axiosInstance.post("/login", data);
+      const res = await axiosInstance.post("/v1/auth/login", data);
       setUser(res.data.user);
       setSession(res.data.session);
+      router.replace("/(tabs)");
     } catch (err: any) {
+      console.log(err);
+
       const message =
-        err?.response?.data?.message ?? "Something went wrong. Please try again.";
+        err?.response?.data?.message ??
+        "Something went wrong. Please try again.";
       setApiError(message);
     }
   }
@@ -54,12 +58,21 @@ export default function Signin() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center", padding: 24 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: "center",
+          padding: 24,
+        }}
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ marginBottom: 32 }}>
           <Text
-            style={{ fontSize: 28, fontWeight: "700", color: colors.textPrimary, marginBottom: 6 }}
+            style={{
+              fontSize: 28,
+              fontWeight: "700",
+              color: colors.textPrimary,
+              marginBottom: 6,
+            }}
           >
             Welcome back
           </Text>
@@ -105,7 +118,9 @@ export default function Signin() {
           />
 
           {apiError && (
-            <Text style={{ color: colors.error, fontSize: 13, textAlign: "center" }}>
+            <Text
+              style={{ color: colors.error, fontSize: 13, textAlign: "center" }}
+            >
               {apiError}
             </Text>
           )}
@@ -131,7 +146,9 @@ export default function Signin() {
             Don't have an account?
           </Text>
           <TouchableOpacity onPress={() => router.push("/(auth)/Signup")}>
-            <Text style={{ color: colors.link, fontSize: 14, fontWeight: "600" }}>
+            <Text
+              style={{ color: colors.link, fontSize: 14, fontWeight: "600" }}
+            >
               Sign up
             </Text>
           </TouchableOpacity>
