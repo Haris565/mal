@@ -2,6 +2,7 @@ import { Text as DefaultText, View as DefaultView } from "react-native";
 
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "./useColorScheme";
+import { useThemeStore } from "../store";
 
 type ThemeProps = {
   lightColor?: string;
@@ -26,29 +27,26 @@ export function useThemeColor(
 }
 
 export function Text(props: TextProps) {
-  const { style, lightColor, darkColor, className, ...otherProps } = props;
-  const color = useThemeColor({ light: lightColor, dark: darkColor }, "text");
+  const { style, className, ...otherProps } = props;
+  const { colors } = useThemeStore();
 
   return (
     <DefaultText
       className={className}
-      style={[{ color }, style]}
+      style={[{ color: colors.textPrimary }, style]}
       {...otherProps}
     />
   );
 }
 
 export function View(props: ViewProps) {
-  const { style, lightColor, darkColor, className, ...otherProps } = props;
-  const backgroundColor = useThemeColor(
-    { light: lightColor, dark: darkColor },
-    "background",
-  );
+  const { style, className, ...otherProps } = props;
+  const { colors } = useThemeStore();
 
   return (
     <DefaultView
       className={className}
-      style={[{ backgroundColor }, style]}
+      style={[{ backgroundColor: colors.background }, style]}
       {...otherProps}
     />
   );
